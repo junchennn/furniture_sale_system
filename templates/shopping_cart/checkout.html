@@ -4,31 +4,6 @@
 {% block content %}
 {% include 'messages.html' %}
 <div style="margin-bottom: 10px; margin-top: 10px" >Your remaining balance is: £{{ balance}}</div>
-    {% comment %}
-    <div class="container">
-    <section>
-      <div class="row" id="tablerow">
-      <div class="col-md-4 col-xs-12">
-        <div class="panel panel-primary">
-          
-          <div class="panel-body">
-            <h5>Enter Voucher Code Below<br><small>If multiple, separate each with comma</small></h5>
-
-            <div>
-              <form action="." method="post">
-                {% csrf_token %}
-                <input type="text"  name="voucher_codes" class="form-control" id="voucher_code" required>
-                <input type="hidden"  name="order_id" value="{{ order.id }}">
-                <br>
-                <span>
-                  <input type="submit" class="btn btn-warning pull-right" value="Apply Voucher"> 
-                </span>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
-      {% endcomment %}
       <div class="col-md-12 col-xs-12">
         <table class="table">
           <tr>
@@ -39,13 +14,15 @@
               {% for item in order.get_cart_items %}
                 <tr>
                   <td>{{ item }}</td>
-                  <td>${{ item.product.price }}</td>
+                  <td>x {{ item.quantity }}</td>
+                  <td>£{{ item.product.price }}</td>
                 </tr>
               {% endfor %}
             </td>
           </tr>
           <tr>
             <td><strong>Order Total</strong> </td>
+            <td></td>
             <td> <strong>£{{ order.get_cart_total }}</strong></td>
           </tr>
         </table>

@@ -18,7 +18,7 @@ class Product(models.Model):
 
     def remove_items_from_inventory(self, count=1, save=True):
         current_inv = self.inventory
-        current_inv = current_inv - 1
+        current_inv = current_inv - count
         self.inventory = current_inv
         if save == True:
             self.save()

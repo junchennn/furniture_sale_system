@@ -25,6 +25,7 @@ from shopping_cart.views import (
     process_payment,
     update_transaction_records,
     success,
+    remove_single_item_from_cart,
 )
 
 
@@ -44,13 +45,14 @@ urlpatterns = [
     path('products/<int:pk>/', product_detail_view,                 name='product_detail'),
     path('products/update/<int:pk>/', product_update_view,          name='update_product'),
     #shoping cart & checkout pages
-    path('cart/add-to-cart/(?P<item_id>[-\w]+)/$', add_to_cart,     name='add_to_cart'),
+    path('cart/add-to-cart/(?P<item_id>', add_to_cart,              name='add_to_cart'),
+    path('cart/remove-single/(?P<item_id>', remove_single_item_from_cart,name='remove_one_cart'),
     path('cart/order-summary/$', order_details,                     name='order_summary'),
     path('cart/success/$', success,                                 name='purchase_success'),
-    path('cart/item/delete/(?P<item_id>[-\w]+)/$', delete_from_cart,name='delete_item'),
-    path('cart/checkout/$', checkout,                               name='checkout'),
-    path('cart/payment/(?P<order_id>[-\w]+)/$', process_payment,    name='process_payment'),
-    path('cart/update-transaction/(?P<order_id>[-\w]+)/$', update_transaction_records, name='update_records'),
+    path('cart/item/delete/(?P<item_id>', delete_from_cart,name='delete_item'),
+    path('cart/checkout/', checkout,                               name='checkout'),
+    path('cart/payment/(?P<order_id>', process_payment,    name='process_payment'),
+    path('cart/update-transaction/(?P<order_id>', update_transaction_records, name='update_records'),
 
     re_path(r'api/products/(?P<pk>\d+)/', product_api_detail_view),
     

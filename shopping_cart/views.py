@@ -19,28 +19,79 @@ def get_user_pending_order(request): # grab order for the current user
     return 0
 
 @login_required()
-def add_to_cart(request, *args, **kwargs):
+def add_to_cart(request, item_id):
     user_profile    = get_object_or_404(Profile, user=request.user)
     # filter rpoducts by id
-    product         = Product.objects.filter(id=kwargs.get('item_id', "")).first()
-    # if product in request.user.Profile.eBooks.all():
-    #     messages.info(request, 'You already own this book')
-    #     return redirect(reverse('products:product-list'))
+    product         = Product.objects.filter(pk=item_id).first()
     
     # create OrderItem of the chosen product
     order_item, status = OrderItem.objects.get_or_create(product=product)
+    order_qs           = Order.objects.filter(user=user_profile, is_ordered=False)
 
-    # create an order associated with the user
-    user_order, status = Order.objects.get_or_create(user=user_profile, is_ordered=False)
+    if order_qs.exists():
+        order = order_qs[0]
+        # need to check if item is already in the order
+        if order.items.filter(product__pk=item_id).exists():
+            if order_item.quantity < product.inventory:
+                order_item.quantity += 1
+                order_item.save()
+                messages.info(request, "This product quantity was updated.")
+                return redirect(reverse('order_summary'))
+            else:
+                messages.info(request, "You have added the maximum number to your basket.")
+                return redirect(reverse('order_summary'))
+        else:
+            order.items.add(order_item)
+            messages.info(request, "This item was added to the basket")
+            return redirect(reverse('product_list'))
+    else:
+        # ordered_date = timezone.now()
+        order = Order.objects.create(
+            user=user_profile, order_id=generate_order_id()
+        )
+        order.items.add(order_item)
+        messages.info(request, 'This item was added to the basket.')
+        return redirect(reverse('order_summary'))
 
-    user_order.items.add(order_item)
+    # # create an order associated with the user
+    # user_order, status = Order.objects.get_or_create(user=user_profile, is_ordered=False)
+    # user_order.items.add(order_item)
 
-    if status:
-        # use extra mode to generate order id
-        user_order.order_id = generate_order_id()
-        user_order.save()
-    messages.info(request, 'Item added to cart successfully.')
-    return redirect(reverse('product_list'))
+    # if status:
+    #     # use extra mode to generate order id
+    #     user_order.order_id = generate_order_id()
+    #     user_order.save()
+    # messages.info(request, 'Item added to cart successfully.')
+    # return redirect(reverse('product_list'))
+
+@login_required
+def remove_single_item_from_cart(request, item_id):
+    product = get_object_or_404(Product, pk=item_id)
+    user_profile    = get_object_or_404(Profile, user=request.user)
+    order_qs = Order.objects.filter(
+        user=user_profile,
+        is_ordered=False
+    )
+    if order_qs.exists():
+        order = order_qs[0]
+        # check if the order item is in the order
+        if order.items.filter(product__pk=item_id).exists():
+            order_item = OrderItem.objects.filter(
+                product=product)[0]
+
+            if order_item.quantity > 1:
+                order_item.quantity -= 1
+                order_item.save()
+            else:
+                order.items.remove(order_item)
+            messages.info(request, "This item quantity was updated.")
+            return redirect("order_summary")
+        else:
+            messages.info(request, "This item was not in your cart")
+            return redirect(reverse("product_list"))
+    else:
+        messages.info(request, "You do not have an active order")
+        return redirect(reverse('order_summary'))
 
 @login_required()
 def delete_from_cart(request, item_id):
@@ -109,7 +160,7 @@ def update_transaction_records(request, order_id):
     # update products inventory
     for item in order_items:
         product = item.product
-        product.remove_items_from_inventory(count=1, save=True)
+        product.remove_items_from_inventory(count=item.quantity, save=True)
 
     messages.info(request, "Thank you! Your order have been added to your profile.")
     return redirect(reverse('profile'))

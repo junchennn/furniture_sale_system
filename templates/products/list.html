@@ -18,9 +18,9 @@ Products - {{block.super}}
             {% if object.inventory == 0 %}
             Out of stock
             {% elif object in current_order_products %}
-            <a href="{% url 'order_summary' %}" class="btn btn-warning">Go to Cart</a>
+            <a href="{% url 'order_summary' %}" class="btn btn-primary">Go to Basket</a>
             {% else %}
-            <a href="{% url 'add_to_cart' object.id %}" class="btn btn-warning">Add to Cart</a>
+            <a href="{% url 'add_to_cart' object.id %}" class="btn btn-warning">Add to Basket</a>
             {% endif %}
         </div>
     {% endfor %}
