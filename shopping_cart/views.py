@@ -13,6 +13,7 @@ from products.models import Product
 
 def get_user_pending_order(request): # grab order for the current user     
     user_profile    = get_object_or_404(Profile, user=request.user)
+    # grab orders that are not completed of a user
     order = Order.objects.filter(user=user_profile, is_ordered=False)
     if order.exists():
         return order[0] # ensure the only order in the filtered list is grabbed
@@ -23,7 +24,6 @@ def add_to_cart(request, item_id):
     user_profile    = get_object_or_404(Profile, user=request.user)
     # filter rpoducts by id
     product         = Product.objects.filter(pk=item_id).first()
-    
     # create OrderItem of the chosen product
     order_item, status = OrderItem.objects.get_or_create(product=product)
     order_qs           = Order.objects.filter(user=user_profile, is_ordered=False)
@@ -32,6 +32,7 @@ def add_to_cart(request, item_id):
         order = order_qs[0]
         # need to check if item is already in the order
         if order.items.filter(product__pk=item_id).exists():
+            # this condition makes sure that order item number is not more than the inventory
             if order_item.quantity < product.inventory:
                 order_item.quantity += 1
                 order_item.save()
@@ -40,12 +41,13 @@ def add_to_cart(request, item_id):
             else:
                 messages.info(request, "You have added the maximum number to your basket.")
                 return redirect(reverse('order_summary'))
+        # if order item not in there we add it as one
         else:
             order.items.add(order_item)
             messages.info(request, "This item was added to the basket")
             return redirect(reverse('product_list'))
+    # create an order if there isnt an existing order when user click on add to basket
     else:
-        # ordered_date = timezone.now()
         order = Order.objects.create(
             user=user_profile, order_id=generate_order_id()
         )
@@ -53,19 +55,8 @@ def add_to_cart(request, item_id):
         messages.info(request, 'This item was added to the basket.')
         return redirect(reverse('order_summary'))
 
-    # # create an order associated with the user
-    # user_order, status = Order.objects.get_or_create(user=user_profile, is_ordered=False)
-    # user_order.items.add(order_item)
-
-    # if status:
-    #     # use extra mode to generate order id
-    #     user_order.order_id = generate_order_id()
-    #     user_order.save()
-    # messages.info(request, 'Item added to cart successfully.')
-    # return redirect(reverse('product_list'))
-
 @login_required
-def remove_single_item_from_cart(request, item_id):
+def remove_single_item_from_cart(request, item_id): # this allows a reduction in item quantity
     product = get_object_or_404(Product, pk=item_id)
     user_profile    = get_object_or_404(Profile, user=request.user)
     order_qs = Order.objects.filter(
@@ -123,7 +114,7 @@ def checkout(request, **kwargs):
 
 @login_required()
 def process_payment(request, order_id):
-    # process_payment (check if user has enough balance to purchase the order)
+    # process_payment - this checks if user has enough balance to purchase the order
     user_profile = get_object_or_404(Profile, user=request.user)
     order_total = Order.objects.filter(pk=order_id).first().get_cart_total()
     if user_profile.balance > order_total:
