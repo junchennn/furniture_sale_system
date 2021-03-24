@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Products - {{block.super}}
+{% endblock %}
+
+
+{% block content %}
+    {{ message }}
+    <div style="margin-bottom: 25px;" aligntext>Your remaining balance is: £{{ balance}}</div>
+    <div class="row">
+    {% for object in object_list %}
+        <div class="col-sm-3" style="padding-bottom: 30px; text-align: center;">
+            <p>{{ object.name }}</p>
+            <p>Price: £{{ object.price }}</p>
+            <p>{{ object.inventory }} left</p>
+            {% if object.inventory == 0 %}
+            Out of stock
+            {% elif object in current_order_products %}
+            <a href="{% url 'order_summary' %}" class="btn btn-warning">Go to Cart</a>
+            {% else %}
+            <a href="{% url 'add_to_cart' object.id %}" class="btn btn-warning">Add to Cart</a>
+            {% endif %}
+        </div>
+    {% endfor %}
+    </div>
+{% endblock content %}

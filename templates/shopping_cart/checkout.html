@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+{% include 'messages.html' %}
+<div style="margin-bottom: 10px; margin-top: 10px" >Your remaining balance is: £{{ balance}}</div>
+    {% comment %}
+    <div class="container">
+    <section>
+      <div class="row" id="tablerow">
+      <div class="col-md-4 col-xs-12">
+        <div class="panel panel-primary">
+          
+          <div class="panel-body">
+            <h5>Enter Voucher Code Below<br><small>If multiple, separate each with comma</small></h5>
+
+            <div>
+              <form action="." method="post">
+                {% csrf_token %}
+                <input type="text"  name="voucher_codes" class="form-control" id="voucher_code" required>
+                <input type="hidden"  name="order_id" value="{{ order.id }}">
+                <br>
+                <span>
+                  <input type="submit" class="btn btn-warning pull-right" value="Apply Voucher"> 
+                </span>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endcomment %}
+      <div class="col-md-12 col-xs-12">
+        <table class="table">
+          <tr>
+            <td><h4>Order Summary</h4></td>
+          </tr>
+          <tr>
+            <td>
+              {% for item in order.get_cart_items %}
+                <tr>
+                  <td>{{ item }}</td>
+                  <td>${{ item.product.price }}</td>
+                </tr>
+              {% endfor %}
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Order Total</strong> </td>
+            <td> <strong>£{{ order.get_cart_total }}</strong></td>
+          </tr>
+        </table>
+            <form method="POST", action="{% url 'process_payment' order.id %}">
+                {% csrf_token %}
+                <button style="width:100%; ;" class="btn btn-warning">Pay with your credit</button>
+            </form>
+      </div>
+     </div>
+    </section>
+{% endblock content %}
+
+{% block scripts %}
+{{ block.super }}
+<!-- script for the stripe form -->
+<script src="{% static 'js/checkout.js' %}"></script>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+
+<script src="https://js.braintreegateway.com/web/dropin/1.13.0/js/dropin.min.js"></script>
+<script>
+  var form = document.querySelector('#payment-form');
+  var client_token = '{{ client_token }}';
+
+  braintree.dropin.create({
+    authorization: client_token,
+    container: '#bt-dropin',
+    paypal: {
+      flow: 'vault'
+    }
+  }, function (createErr, instance) {
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      instance.requestPaymentMethod(function (err, payload) {
+        if (err) {
+          console.log('Error', err);
+          return;
+        }
+
+        // Add the nonce to the form and submit
+        document.querySelector('#nonce').value = payload.nonce;
+        form.submit();
+      });
+    });
+  });
+</script>
+
+<!-- script for toggling display of the form -->
+<script type="text/javascript">
+    function toggleDisplay() {
+      var x = document.getElementById("collapseStripe");
+      if (x.style.display === "none") {
+          x.style.display = "block";
+      } else {
+          x.style.display = "none";
+      }
+    };
+</script>
+{% endblock scripts %}
