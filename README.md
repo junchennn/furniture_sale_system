@@ -1,4 +1,4 @@
-# furniture_sale_system
+# Django Furniture System
 
 This is a very simple shopping basket built with Django.
 
@@ -10,7 +10,7 @@ To get this project running you need to have Python and virtualenv installed. Pl
 source env/bin/active
 ```
 
-Next install the project dependencies with
+Next install the project dependencies with (plese note pacakage libraries are also within this repository)
 
 ```
 pip install -r requirements.txt
